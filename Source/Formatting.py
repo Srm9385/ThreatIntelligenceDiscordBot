@@ -72,6 +72,8 @@ def format_single_article(article):
     return message
 
 def format_single_ransom(article):
+
+    # Used to format ransom "articles"
     description = ""
 
     if "summary" in article:
@@ -109,8 +111,10 @@ def format_single_ransom(article):
         )
 
     else:
-        if article["title"]:
-            message.set_thumbnail(url=THUMBNAIL_URL)
+
+        # Got rid of this to reduce computational load, this can be configured directly in discord
+        # if article["title"]:
+        #     message.set_thumbnail(url=THUMBNAIL_URL)
 
         message.add_field(
             name=source_text,

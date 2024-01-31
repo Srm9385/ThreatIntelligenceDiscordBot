@@ -55,8 +55,7 @@ gov_rss_feed_list = [
     ["https://www.cisecurity.org/feed/advisories", "Center of Internet Security"],
     ["https://cisa.gov/cybersecurity-advisories/all.xml", "CISA Advisories"],
     ["https://cisa.gov/news.xml", "CISA News"],
-    ["cisecurity.org/advisory/feed", "CISECURITY"],
-    [""]
+    ["cisecurity.org/advisory/feed", "CISECURITY"]
 ]
 
 FeedTypes = Enum("FeedTypes", "RSS JSON")
@@ -143,6 +142,8 @@ def proccess_articles(articles):
     return messages, new_articles
 
 def proccess_ransom_articles(articles):
+
+    # Used for processing ransom "articles" since I wanted them to have a different format
     messages, new_articles = [], []
     articles.sort(key=lambda article: article["publish_date"])
 
@@ -159,6 +160,7 @@ def proccess_ransom_articles(articles):
             if config_entry >= article["publish_date"]:
                 continue
 
+        # This is where formatting the single ransom article will be used
         messages.append(format_single_ransom(article))
         new_articles.append(article)
 
