@@ -1,7 +1,8 @@
 from configparser import ConfigParser, NoOptionError
 from discord import Webhook, RequestsWebhookAdapter
+import sys
 
-from .Utils import verify_config_section
+from Utils import verify_config_section
 
 from os import mkdir
 

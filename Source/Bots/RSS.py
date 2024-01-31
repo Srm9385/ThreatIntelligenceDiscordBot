@@ -9,6 +9,7 @@ import sys
 import atexit
 
 import logging
+
 logger = logging.getLogger("rss")
 
 import feedparser
@@ -78,7 +79,6 @@ rss_log_file_path = os.path.join(
     config.get("RSS", "RSSLogFile", raw=True, vars={"fallback": "RSSLog.txt"}),
 )
 
-
 rss_log = ConfigParser()
 rss_log.read(rss_log_file_path)
 
@@ -140,9 +140,9 @@ def proccess_articles(articles):
 def send_messages(hook, messages, articles, batch_size=10):
     logger.debug(f"Sending {len(messages)} messages in batches of {batch_size}")
     for i in range(0, len(messages), batch_size):
-        hook.send(embeds=messages[i : i + batch_size])
+        hook.send(embeds=messages[i: i + batch_size])
 
-        for article in articles[i : i + batch_size]:
+        for article in articles[i: i + batch_size]:
             rss_log.set("main", article["source"], article["publish_date"])
 
         time.sleep(3)
