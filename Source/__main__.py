@@ -1,11 +1,8 @@
-from configparser import ConfigParser, NoOptionError
 import sys
 
-from Utils import get_missing_config_params, configure_logger
+from . import config
+from .Utils import get_missing_config_params, configure_logger
 
-config = ConfigParser()
-config.optionxform = str  # Preserve case when reading config file
-config.read("config.ini")
 
 def verify_config(section_name):
     missing_params = get_missing_config_params(config, section_name)

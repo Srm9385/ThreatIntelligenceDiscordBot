@@ -70,3 +70,52 @@ def format_single_article(article):
         )
 
     return message
+
+def format_single_ransom(article):
+    description = ""
+
+    if "summary" in article:
+        for text_part in article["summary"].split("."):
+            if not (len(description) + len(text_part)) > 250:
+                description += text_part + "."
+            else:
+                description += ".."
+                break
+
+    source_text = f"**Ransom Group**: *{article['source']}*"
+    date_text = (
+        "**Date Reported**: " + " | *".join(format_datetime(article["publish_date"])) + "*"
+    )
+
+    if "link" in article:
+        message = Embed(
+            title=article["title"],
+            url=article["link"],
+            color=MAIN_COLOR,
+        )
+    else:
+        message = Embed(
+            title=article["title"],
+            color=MAIN_COLOR,
+        )
+
+    if description and "link" in article:
+        message.add_field(name=description, value=article["link"], inline=False)
+
+        message.add_field(
+            name="Details: ",
+            value=source_text + "\n" + date_text,
+            inline=False,
+        )
+
+    else:
+        if article["title"]:
+            message.set_thumbnail(url=THUMBNAIL_URL)
+
+        message.add_field(
+            name=source_text,
+            value=date_text,
+            inline=False,
+        )
+
+    return message

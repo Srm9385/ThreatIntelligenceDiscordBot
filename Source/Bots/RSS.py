@@ -16,7 +16,7 @@ import feedparser
 from configparser import ConfigParser, NoOptionError
 
 from .. import webhooks, config
-from ..Formatting import format_single_article
+from ..Formatting import format_single_article, format_single_ransom
 
 private_rss_feed_list = [
     ['https://grahamcluley.com/feed/', 'Graham Cluley'],
@@ -44,13 +44,19 @@ private_rss_feed_list = [
     ['https://www.recordedfuture.com/feed', 'Recorded Future'],
     ['https://www.sentinelone.com/feed/', 'SentinelOne'],
     ['https://redcanary.com/feed/', 'RedCanary'],
-    ['https://cybersecurity.att.com/site/blog-all-rss', 'ATT']
+    ['https://cybersecurity.att.com/site/blog-all-rss', 'ATT'],
+    ['https://rss.packetstormsecurity.com/news/tags/cybercrime/feed', "Packet Storm Security"],
+    ['https://thecyberwire.com/feeds/rss.xml', "The Cyber Wire"]
 ]
 
 gov_rss_feed_list = [
     ["https://www.cisa.gov/uscert/ncas/alerts.xml", "US-CERT CISA"],
     ["https://www.ncsc.gov.uk/api/1/services/v1/report-rss-feed.xml", "NCSC"],
     ["https://www.cisecurity.org/feed/advisories", "Center of Internet Security"],
+    ["https://cisa.gov/cybersecurity-advisories/all.xml", "CISA Advisories"],
+    ["https://cisa.gov/news.xml", "CISA News"],
+    ["cisecurity.org/advisory/feed", "CISECURITY"],
+    [""]
 ]
 
 FeedTypes = Enum("FeedTypes", "RSS JSON")
@@ -89,7 +95,7 @@ def get_ransomware_news(source):
 
     for post in posts:
         post["publish_date"] = post["discovered"]
-        post["title"] = "Post: " + post["post_title"]
+        post["title"] = "Victim: " + post["post_title"]
         post["source"] = post["group_name"]
 
     return posts
@@ -136,6 +142,27 @@ def proccess_articles(articles):
 
     return messages, new_articles
 
+def proccess_ransom_articles(articles):
+    messages, new_articles = [], []
+    articles.sort(key=lambda article: article["publish_date"])
+
+    for article in articles:
+        try:
+            config_entry = rss_log.get("main", article["source"])
+        except NoOptionError:  # automatically add newly discovered groups to config
+            rss_log.set("main", article["source"], " = ?")
+            config_entry = rss_log.get("main", article["source"])
+
+        if config_entry.endswith("?"):
+            rss_log.set("main", article["source"], article["publish_date"])
+        else:
+            if config_entry >= article["publish_date"]:
+                continue
+
+        messages.append(format_single_ransom(article))
+        new_articles.append(article)
+
+    return messages, new_articles
 
 def send_messages(hook, messages, articles, batch_size=10):
     logger.debug(f"Sending {len(messages)} messages in batches of {batch_size}")
@@ -152,6 +179,13 @@ def process_source(post_gathering_func, source, hook):
     raw_articles = post_gathering_func(source)
 
     processed_articles, new_raw_articles = proccess_articles(raw_articles)
+    send_messages(hook, processed_articles, new_raw_articles)
+
+def process_ransom_source(post_gathering_func, source, hook):
+    # Created additional function to be able to modify bot output format better
+    raw_articles = post_gathering_func(source)
+
+    processed_articles, new_raw_articles = proccess_ransom_articles(raw_articles)
     send_messages(hook, processed_articles, new_raw_articles)
 
 
@@ -186,7 +220,7 @@ def main():
             write_status_message(f"Checking {detail_name}")
 
             if details["type"] == FeedTypes.JSON:
-                process_source(get_ransomware_news, details["source"], details["hook"])
+                process_ransom_source(get_ransomware_news, details["source"], details["hook"])
             elif details["type"] == FeedTypes.RSS:
                 handle_rss_feed_list(details["source"], details["hook"])
 
